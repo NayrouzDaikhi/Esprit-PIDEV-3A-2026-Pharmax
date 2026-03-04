@@ -1,0 +1,16 @@
+# See the configuration reference at https://symfony.com/bundles/SchebTwoFactorBundle/6.x/configuration.html
+scheb_two_factor:
+    security_tokens:
+        - Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken
+        - Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken
+        
+    google:
+        enabled: true
+        server_name: PHARMAX
+        issuer: PHARMAX
+        template: security/2fa_form.html.twig
+        digits: 6
+        # window option is not supported in this version, use leeway for time drift if needed
+        # leeway: 0
+
+

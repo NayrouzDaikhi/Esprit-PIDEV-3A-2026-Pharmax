@@ -1,0 +1,20 @@
+lexik_jwt_authentication:
+    secret_key: '%jwt_secret_key%'
+    public_key: '%jwt_public_key%'
+    pass_phrase: '%env(JWT_PASSPHRASE)%'
+    
+    # Token configuration
+    token_ttl: 3600  # 1 hour access token
+    clock_skew: 0
+    
+    # Where to look for token
+    token_extractors:
+        authorization_header:
+            enabled: true
+            prefix: Bearer
+        query_parameter:
+            enabled: false
+            name: token
+        cookie:
+            enabled: false
+            name: BEARER

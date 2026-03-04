@@ -6,6 +6,11 @@
 parameters:
     huggingface_api_key: '%env(HUGGINGFACE_API_KEY)%'
     gemini_api_key: '%env(GEMINI_API_KEY)%'
+    jwt_secret_key: '%kernel.project_dir%/config/jwt/private.pem'
+    jwt_public_key: '%kernel.project_dir%/config/jwt/public.pem'
+    jwt_passphrase: '%env(JWT_PASSPHRASE)%'
+    jwt_token_ttl: '%env(int:JWT_TOKEN_TTL)%'
+    jwt_refresh_token_ttl: '%env(int:JWT_REFRESH_TOKEN_TTL)%'
 
 services:
     # default configuration for services in *this* file
@@ -31,4 +36,13 @@ services:
     App\Service\GeminiService:
         arguments:
             $apiKey: '%gemini_api_key%'
+
+    App\Service\JwtTokenService:
+        arguments:
+            $tokenTtl: '%jwt_token_ttl%'
+            $refreshTokenTtl: '%jwt_refresh_token_ttl%'
+
+    App\Security\JwtAuthenticator:
+        arguments:
+            $jwtPublicKey: '%jwt_public_key%'
 

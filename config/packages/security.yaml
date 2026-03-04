@@ -17,9 +17,18 @@ security:
             provider: app_user_provider
             entry_point: App\Security\LoginFormAuthenticator
             custom_authenticators:
+                - App\Security\JwtAuthenticator
                 - App\Security\GoogleAuthenticator
                 - App\Security\LoginFormAuthenticator
             user_checker: App\Security\UserChecker
+            two_factor:
+                auth_form_path: /2fa
+                check_path: /2fa_check
+                prepare_on_login: true
+                enable_csrf: true
+                csrf_parameter: _csrf_token
+                csrf_token_id: two_factor_auth
+
             logout:
                 path: app_logout
                 target: app_login
@@ -32,13 +41,33 @@ security:
                 always_remember_me: false
 
     access_control:
+        # JWT API endpoints (public)
+        - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/refresh, roles: PUBLIC_ACCESS }
+        
+        # JWT protected endpoints
+        - { path: ^/api/auth/token, roles: ROLE_USER }
+        - { path: ^/api/auth/me, roles: ROLE_USER }
+        - { path: ^/api/auth/logout, roles: ROLE_USER }
+        
+        # 2FA setup endpoints (user must be authenticated)
+        - { path: ^/2fa/(setup|setup-qr|verify|disable), roles: ROLE_USER }
+        
+        # 2FA login endpoints (public, part of bundle's 2FA verification flow)
+        - { path: ^/2fa, roles: PUBLIC_ACCESS }
+        
+        # Existing endpoints
         - { path: ^/connect/google, roles: PUBLIC_ACCESS }
         - { path: ^/login$, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/commentaires, roles: PUBLIC_ACCESS, methods: [POST] }
+        - { path: ^/api/statistics, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/admin, roles: [ROLE_ADMIN, ROLE_SUPER_ADMIN] }
         - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/, roles: PUBLIC_ACCESS }
 
 when@test:
     security:

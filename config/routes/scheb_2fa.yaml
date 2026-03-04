@@ -1,0 +1,27 @@
+2fa_login:
+    path: /2fa
+    defaults:
+        _controller: "scheb_two_factor.form_controller::form"
+
+2fa_login_check:
+    path: /2fa_check
+# Custom 2FA setup routes (managed by our TwoFactorAuthController)
+app_2fa_setup:
+    controller: App\Controller\TwoFactorAuthController::setup
+    path: /2fa/setup
+    methods: [GET]
+
+app_2fa_setup_qr:
+    controller: App\Controller\TwoFactorAuthController::setupQrCode
+    path: /2fa/setup-qr
+    methods: [GET]
+
+app_2fa_verify:
+    controller: App\Controller\TwoFactorAuthController::verify
+    path: /2fa/verify
+    methods: [POST]
+
+app_2fa_disable:
+    controller: App\Controller\TwoFactorAuthController::disable
+    path: /2fa/disable
+    methods: [POST]

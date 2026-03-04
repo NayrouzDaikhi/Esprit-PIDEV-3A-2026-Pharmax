@@ -3,6 +3,7 @@
 namespace App\Security;
 
 use App\Repository\UserRepository;
+use Scheb\TwoFactorBundle\Model\Google\TwoFactorInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -96,6 +97,9 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         // Add a friendly welcome flash for users who just signed in
         $displayName = method_exists($user, 'getFullName') ? $user->getFullName() : $user->getUserIdentifier();
         $request->getSession()->getFlashBag()->add('login_success', sprintf('Welcome back, %s!', $displayName));
+
+        // JWT is automatically generated and stored in session by JwtGenerationSubscriber
+        // Frontend can retrieve it via GET /api/auth/token endpoint
 
         // Redirect based on roles (admin or super admin)
         if (in_array('ROLE_ADMIN', $user->getRoles(), true) || in_array('ROLE_SUPER_ADMIN', $user->getRoles(), true)) {

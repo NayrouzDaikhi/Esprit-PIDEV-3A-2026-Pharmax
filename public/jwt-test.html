@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT Authentication Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        h2 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        textarea {
+            resize: vertical;
+            max-height: 200px;
+            min-height: 80px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .token-display {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .badges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 JWT Authentication Test</h1>
+        <p class="subtitle">Test the JWT token generation with the fixed service</p>
+
+        <!-- Status -->
+        <div id="statusContainer"></div>
+
+        <!-- API Login Section -->
+        <div class="section">
+            <h2>API Login</h2>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="joujou@gmail.com" value="joujou@gmail.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter password" value="Test123!">
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="testLogin()">🔑 Login & Get Token</button>
+                <button class="btn-secondary" onclick="clearAllData()">Clear Data</button>
+            </div>
+        </div>
+
+        <!-- Token Display -->
+        <div class="section" id="tokenSection" style="display: none;">
+            <h2>Access Token</h2>
+            <div class="badges" id="tokenBadges"></div>
+            <textarea id="tokenDisplay" readonly></textarea>
+            <button class="btn-secondary" onclick="copyToken()" style="margin-top: 10px;">📋 Copy Token</button>
+        </div>
+
+        <!-- Session Token Section -->
+        <div class="section">
+            <h2>Session-Based Token</h2>
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                Get JWT token for a user already logged in via session/form
+            </p>
+            <button class="btn-primary" onclick="testSessionToken()">📥 Retrieve Token from Session</button>
+        </div>
+
+        <!-- Test API Call -->
+        <div class="section" id="apiTestSection" style="display: none;">
+            <h2>Test API Call</h2>
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                Use the token to make an authenticated API request
+            </p>
+            <div class="button-group">
+                <button class="btn-primary" onclick="testApiCall()">🚀 Test Protected Endpoint</button>
+            </div>
+            <textarea id="apiResponse" placeholder="Response will appear here..." readonly style="margin-top: 10px;"></textarea>
+        </div>
+
+        <!-- Debug Console -->
+        <div class="section">
+            <h2>Debug Console</h2>
+            <textarea id="debugLog" readonly placeholder="Console output..."></textarea>
+        </div>
+    </div>
+
+    <!-- Include the JWT Helper -->
+    <script src="/js/JwtAuthenticationHelper.js"></script>
+    
+    <script>
+        // Initialize helper
+        const jwtHelper = new JwtAuthenticationHelper({ debug: true });
+
+        // Enhanced logging
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        function addDebugLog(message, type = 'info') {
+            const debugEl = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            debugEl.value += `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            debugEl.scrollTop = debugEl.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addDebugLog(args.join(' '), 'log');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addDebugLog(args.join(' '), 'error');
+        };
+
+        function showStatus(message, type = 'info') {
+            const container = document.getElementById('statusContainer');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(div);
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    //div.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showStatus('❌ Please enter email and password', 'error');
+                return;
+            }
+
+            showStatus('⏳ Logging in...', 'info');
+            
+            try {
+                const result = await jwtHelper.loginWithCredentials(email, password);
+                
+                showStatus(`✅ Login successful! Welcome ${result.user.name}`, 'success');
+                
+                // Display token
+                const tokenSection = document.getElementById('tokenSection');
+                const tokenDisplay = document.getElementById('tokenDisplay');
+                const tokenBadges = document.getElementById('tokenBadges');
+                
+                tokenDisplay.value = result.access_token;
+                tokenBadges.innerHTML = `
+                    <span class="badge success">Token Type: ${result.token_type}</span>
+                    <span class="badge success">Expires: ${result.expires_in}s</span>
+                    <span class="badge success">User: ${result.user.email}</span>
+                `;
+                tokenSection.style.display = 'block';
+                document.getElementById('apiTestSection').style.display = 'block';
+            } catch (error) {
+                showStatus(`❌ Login failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSessionToken() {
+            showStatus('⏳ Retrieving token from session...', 'info');
+            
+            try {
+                const result = await jwtHelper.retrieveJwtToken();
+                showStatus('✅ Token retrieved from session', 'success');
+                
+                const tokenSection = document.getElementById('tokenSection');
+                const tokenDisplay = document.getElementById('tokenDisplay');
+                const tokenBadges = document.getElementById('tokenBadges');
+                
+                tokenDisplay.value = result.access_token;
+                tokenBadges.innerHTML = `
+                    <span class="badge success">Token Type: ${result.token_type}</span>
+                    <span class="badge success">Expires: ${result.expires_in}s</span>
+                `;
+                tokenSection.style.display = 'block';
+                document.getElementById('apiTestSection').style.display = 'block';
+            } catch (error) {
+                showStatus(`⚠️ No session found or not authenticated`, 'error');
+            }
+        }
+
+        async function testApiCall() {
+            const token = jwtHelper.getToken();
+            
+            if (!token) {
+                showStatus('❌ No token available. Please login first.', 'error');
+                return;
+            }
+
+            const responseEl = document.getElementById('apiResponse');
+            responseEl.value = 'Testing API call...';
+
+            try {
+                const response = await fetch('/api/auth/token', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    responseEl.value = JSON.stringify(data, null, 2);
+                    showStatus('✅ API call successful', 'success');
+                } else {
+                    responseEl.value = `HTTP ${response.status}: ${response.statusText}`;
+                    showStatus(`❌ API call failed with status ${response.status}`, 'error');
+                }
+            } catch (error) {
+                responseEl.value = `Error: ${error.message}`;
+                showStatus(`❌ API call error: ${error.message}`, 'error');
+            }
+        }
+
+        function copyToken() {
+            const tokenDisplay = document.getElementById('tokenDisplay');
+            tokenDisplay.select();
+            document.execCommand('copy');
+            showStatus('✅ Token copied to clipboard', 'success');
+        }
+
+        function clearAllData() {
+            jwtHelper.clearTokenData();
+            document.getElementById('statusContainer').innerHTML = '';
+            document.getElementById('tokenSection').style.display = 'none';
+            document.getElementById('apiTestSection').style.display = 'none';
+            document.getElementById('email').value = 'joujou@gmail.com';
+            document.getElementById('password').value = 'Test123!';
+            showStatus('✅ Data cleared', 'success');
+        }
+
+        // Check if already authenticated
+        window.addEventListener('load', () => {
+            if (jwtHelper.hasValidToken()) {
+                showStatus('✅ Already authenticated with valid token', 'success');
+                document.getElementById('tokenSection').style.display = 'block';
+                document.getElementById('apiTestSection').style.display = 'block';
+                document.getElementById('tokenDisplay').value = jwtHelper.getToken();
+            }
+        });
+    </script>
+</body>
+</html>

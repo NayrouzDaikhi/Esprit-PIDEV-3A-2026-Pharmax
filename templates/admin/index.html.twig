@@ -111,7 +111,7 @@
                             <tbody>
                                 {% for article in articles|slice(0, 5) %}
                                 <tr class="table-row-clickable">
-                                    <td><strong>{{ article.titre|truncate(30) }}</strong></td>
+                                    <td><strong>{{ article.titre|slice(0, 30) }}{{ article.titre|length > 30 ? '...' : '' }}</strong></td>
                                     <td><small class="text-muted">{{ article.dateCreation|date('d/m/Y') }}</small></td>
                                     <td>
                                         <a href="{{ path('app_article_show', {id: article.id}) }}" class="btn btn-xs btn-info" title="Voir">
@@ -155,7 +155,7 @@
                             <tbody>
                                 {% for produit in produits|slice(0, 5) %}
                                 <tr class="table-row-clickable">
-                                    <td><strong>{{ produit.nom|truncate(20) }}</strong></td>
+                                    <td><strong>{{ produit.nom }}</strong></td>
                                     <td>{{ produit.prix }} DTN</td>
                                     <td>
                                         {% if produit.isStatut() %}
@@ -200,7 +200,7 @@
                             <div class="card border" style="background: linear-gradient(135deg, #27ae60 0%, #3498db 100%); color: white;">
                                 <div class="card-body">
                                     <h6 class="card-title">{{ categorie.nom }}</h6>
-                                    <p class="card-text" style="font-size: 0.9rem;">{{ categorie.description|truncate(60) }}</p>
+                                    <p class="card-text" style="font-size: 0.9rem;">{{ categorie.description }}</p>
                                     <p class="mb-0"><strong>{{ categorie.produits|length }}</strong> produits</p>
                                 </div>
                             </div>

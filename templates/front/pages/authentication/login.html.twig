@@ -17,7 +17,12 @@
 
   {% if error is defined and error %}
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <strong>Login Failed!</strong> {{ error.messageKey|trans(error.messageData, 'security') }}
+      <strong>Login Failed!</strong> 
+      {% if error.messageKey %}
+        {{ error.messageKey|trans(error.messageData, 'security') }}
+      {% else %}
+        {{ error.message }}
+      {% endif %}
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   {% endif %}

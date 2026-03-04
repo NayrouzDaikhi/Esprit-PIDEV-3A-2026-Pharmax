@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enable Two-Factor Authentication - PHARMAX</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        header {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .logo-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #333;
+            font-size: 1.5rem;
+            font-weight: 700;
+            gap: 0.75rem;
+            transition: opacity 0.3s ease;
+        }
+
+        .logo-link:hover {
+            opacity: 0.8;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .setup-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 650px;
+            width: 100%;
+            padding: 3rem;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .step-header h1 {
+            color: #333;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .step-item {
+            margin-bottom: 2rem;
+        }
+
+        .step-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .step-number {
+            background: #5ea96b;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        .alert-danger {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .qr-container {
+            background: #f5f5f5;
+            border: 2px dashed #ddd;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-placeholder {
+            color: #999;
+        }
+
+        #qr-code-container img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .manual-entry {
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .secret-code {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #5ea96b;
+            letter-spacing: 2px;
+            word-break: break-all;
+            margin-bottom: 0.75rem;
+            text-align: center;
+            user-select: all;
+        }
+
+        .btn-copy {
+            width: 100%;
+            background: #5ea96b;
+            border: none;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-copy:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(94, 169, 107, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        #auth-code {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        #auth-code:focus {
+            border-color: #5ea96b;
+            box-shadow: 0 0 0 3px rgba(94, 169, 107, 0.1);
+            outline: none;
+        }
+
+        .form-text {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-verify {
+            width: 100%;
+            background: #5ea96b;
+            border: none;
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-verify:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(94, 169, 107, 0.4);
+        }
+
+        .btn-verify:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .spinner-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #5ea96b;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .spinner-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .spinner-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .loading-text {
+            color: #5ea96b;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .message-box {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .message-box.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .text-muted {
+            color: #888 !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-3 {
+            margin-top: 1rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 600px) {
+            .setup-container {
+                padding: 1.5rem;
+                border-radius: 15px;
+            }
+
+            .step-header h1 {
+                font-size: 1.5rem;
+            }
+
+            #auth-code {
+                font-size: 1.2rem;
+                letter-spacing: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Logo -->
+    <header>
+        <a href="javascript:history.back()" class="logo-link" title="Go back">
+            <div class="logo-icon">
+                <img src="{{ asset('images/logo pharmax.png') }}" alt="Pharmax Logo" />
+            </div>
+            <span>Pharmax</span>
+        </a>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="setup-container">
+            <!-- Step Header -->
+            <div class="step-header">
+                <h1><i class="fas fa-shield-alt"></i> Secure Your Account</h1>
+                <p>Set up two-factor authentication</p>
+            </div>
+
+            <!-- Step 1: Apps -->
+            <div class="step-item">
+                <div class="step-title">
+                    <div class="step-number">1</div>
+                    <span>Download Authenticator App</span>
+                </div>
+                <p class="text-muted" style="margin: 0;">You'll need an authenticator app on your mobile device.</p>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Recommended:</strong> Google Authenticator, Microsoft Authenticator, Authy, or FreeOTP
+                </div>
+            </div>
+
+            <!-- Step 2: QR Code -->
+            <div class="step-item">
+                <div class="step-title">
+                    <div class="step-number">2</div>
+                    <span>Scan QR Code</span>
+                </div>
+                <p class="text-muted" style="margin-bottom: 1rem;">Open your authenticator app and scan this QR code:</p>
+                
+                <div class="qr-container" id="qr-code-container">
+                    <div class="qr-placeholder">
+                        <div class="spinner-dot" style="margin: 0 auto 1rem; animation: bounce 1.4s infinite ease-in-out;"></div>
+                        <p style="margin: 0; color: #999;">Loading QR Code...</p>
+                    </div>
+                </div>
+
+                <div class="manual-entry">
+                    <p style="margin-bottom: 0.75rem; color: #666; font-size: 0.9rem;">
+                        <strong>Can't scan?</strong> Enter this code manually:
+                    </p>
+                    <div class="secret-code">{{ secret }}</div>
+                    <button type="button" class="btn-copy" onclick="copyToClipboard('{{ secret }}')">
+                        <i class="fas fa-copy"></i> Copy Code
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Verify Code -->
+            <div class="step-item">
+                <div class="step-title">
+                    <div class="step-number">3</div>
+                    <span>Verify Code</span>
+                </div>
+                <p class="text-muted" style="margin-bottom: 1rem;">Enter the 6-digit code from your app:</p>
+
+                <form id="verify-2fa-form">
+                    <div class="form-group">
+                        <label for="auth-code" class="form-label">Authentication Code</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="auth-code"
+                            name="code" 
+                            placeholder="000000"
+                            maxlength="6"
+                            pattern="[0-9]{6}"
+                            required
+                            inputmode="numeric"
+                            autocomplete="off">
+                        <small class="form-text text-muted">
+                            Enter the 6-digit code without spaces
+                        </small>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="verify-error-message" class="message-box alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="error-text"></span>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div id="verify-success-message" class="message-box alert alert-success" role="alert">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="success-text"></span>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="verify-loading" class="loading-spinner">
+                        <div class="spinner-wrapper">
+                            <div class="spinner-dot"></div>
+                            <div class="spinner-dot"></div>
+                            <div class="spinner-dot"></div>
+                        </div>
+                        <p class="loading-text">Verifying code...</p>
+                    </div>
+
+                    <button type="submit" class="btn-verify">
+                        <i class="fas fa-check"></i> Verify & Enable 2FA
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load QR code image
+            const img = document.createElement('img');
+            img.src = '{{ path('app_2fa_setup_qr') }}';
+            img.alt = 'QR Code for 2FA Setup';
+            img.style.maxWidth = '280px';
+            img.style.borderRadius = '10px';
+            
+            const container = document.getElementById('qr-code-container');
+            container.innerHTML = '';
+            container.appendChild(img);
+
+            // Handle form submission
+            const form = document.getElementById('verify-2fa-form');
+            const codeInput = document.getElementById('auth-code');
+            const errorMsg = document.getElementById('verify-error-message');
+            const successMsg = document.getElementById('verify-success-message');
+            const loadingDiv = document.getElementById('verify-loading');
+            const errorText = document.getElementById('error-text');
+            const successText = document.getElementById('success-text');
+
+            // Auto-format input (remove non-digits)
+            codeInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+            });
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const code = codeInput.value.trim();
+
+                // Validation
+                if (!code || code.length !== 6) {
+                    errorText.textContent = 'Please enter a valid 6-digit code.';
+                    errorMsg.classList.add('show');
+                    successMsg.classList.remove('show');
+                    return;
+                }
+
+                errorMsg.classList.remove('show');
+                successMsg.classList.remove('show');
+                loadingDiv.style.display = 'block';
+                document.querySelector('.btn-verify').disabled = true;
+
+                try {
+                    const response = await fetch('{{ path('app_2fa_verify') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ code: code })
+                    });
+
+                    const data = await response.json();
+                    loadingDiv.style.display = 'none';
+
+                    if (response.ok && data.success) {
+                        successText.textContent = data.message;
+                        successMsg.classList.add('show');
+                        codeInput.disabled = true;
+                        document.querySelector('.btn-verify').disabled = true;
+                        
+                        // Redirect after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 2000);
+                    } else {
+                        errorText.textContent = data.message || 'Verification failed. Please try again.';
+                        errorMsg.classList.add('show');
+                        codeInput.focus();
+                        document.querySelector('.btn-verify').disabled = false;
+                    }
+                } catch (error) {
+                    loadingDiv.style.display = 'none';
+                    errorText.textContent = 'An error occurred. Please try again.';
+                    errorMsg.classList.add('show');
+                    document.querySelector('.btn-verify').disabled = false;
+                }
+            });
+        });
+
+        // Copy to clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target.closest('.btn-copy');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                const btn = event.target.closest('.btn-copy');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

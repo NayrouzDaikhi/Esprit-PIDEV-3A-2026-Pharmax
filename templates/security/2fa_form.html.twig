@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Factor Authentication - PHARMAX</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        header {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .logo-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #333;
+            font-size: 1.5rem;
+            font-weight: 700;
+            gap: 0.75rem;
+            transition: opacity 0.3s ease;
+        }
+
+        .logo-link:hover {
+            opacity: 0.8;
+        }
+
+        .logo-icon img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: #f8f9fa;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 480px;
+            width: 100%;
+            padding: 2.5rem;
+            text-align: center;
+        }
+
+        .lock-icon {
+            width: 80px;
+            height: 80px;
+            background: #e3f2fd;
+            color: #5ea96b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .auth-card:hover .lock-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        p.subtitle {
+            color: #6c757d;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .code-input-container {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .code-input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: #fafafa;
+            color: #333;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: #5ea96b;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(94, 169, 107, 0.15);
+        }
+
+        .btn-verify {
+            background: linear-gradient(135deg, #5ea96b 0%, #4a8b5c 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(94, 169, 107, 0.3);
+        }
+
+        .btn-verify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(94, 169, 107, 0.4);
+        }
+
+        .btn-verify:active {
+            transform: translateY(0);
+        }
+
+        .help-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .help-link:hover {
+            color: #5ea96b;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            font-size: 0.9rem;
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-danger {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container-fluid">
+            <a href="/" class="logo-link">
+                <div class="logo-icon">
+                    <img src="{{ asset('images/logo pharmax.png') }}" alt="Pharmax">
+                </div>
+                <span>PHARMAX</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="auth-card">
+            <div class="lock-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            
+            <h1>Security Verification</h1>
+            <p class="subtitle">
+                To secure your account, please enter the 6-digit code from your Google Authenticator app.
+            </p>
+
+            {% if authenticationError %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ authenticationError.messageKey|trans(authenticationError.messageData, 'security') }}
+                </div>
+            {% endif %}
+
+            <form action="{{ path('2fa_login_check') }}" method="post">
+                <div class="code-input-container">
+                    <input 
+                        type="text" 
+                        name="_auth_code" 
+                        id="_auth_code"
+                        class="code-input" 
+                        placeholder="000000" 
+                        maxlength="6" 
+                        pattern="[0-9]*" 
+                        inputmode="numeric" 
+                        autocomplete="one-time-code"
+                        required 
+                        autofocus
+                    >
+                </div>
+                
+                {# The CSRF token is required by scheb/2fa-bundle #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('two_factor_auth') }}">
+                
+                <div class="form-check text-start mb-4" style="padding-left: 2rem;">
+                    <input class="form-check-input" type="checkbox" name="_trusted" id="_trusted">
+                    <label class="form-check-label text-muted" for="_trusted" style="font-size: 0.9rem;">
+                        Trust this device for 30 days
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-verify">
+                    Verify Identity <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </form>
+
+            <a href="{{ path('app_logout') }}" class="help-link">
+                <i class="fas fa-sign-out-alt me-1"></i> Cancel and Logout
+            </a>
+        </div>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('_auth_code');
+            
+            input.addEventListener('input', function(e) {
+                // Remove non-numeric characters
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        });
+    </script>
+</body>
+</html>

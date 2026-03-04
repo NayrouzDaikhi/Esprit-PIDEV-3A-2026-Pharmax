@@ -1,0 +1,255 @@
+{
+  "info": {
+    "_postman_id": "symfony-jwt-integration",
+    "name": "Symfony JWT Integration Tests",
+    "description": "Test session and JWT authentication integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "test_email",
+      "value": "dev@example.com",
+      "type": "string"
+    },
+    {
+      "key": "test_password",
+      "value": "Test@1234",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Register New User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set('access_token', jsonData.access_token);",
+              "    pm.environment.set('refresh_token', jsonData.refresh_token);",
+              "    console.log('✅ User registered successfully');",
+              "} else {",
+              "    console.log('❌ Registration failed');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/register",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "register"]
+        }
+      }
+    },
+    {
+      "name": "2. API Login (Direct JWT)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set('access_token', jsonData.access_token);",
+              "    pm.environment.set('refresh_token', jsonData.refresh_token);",
+              "    pm.test('Access token received', function () {",
+              "        pm.expect(jsonData.access_token).to.be.a('string');",
+              "    });",
+              "    pm.test('User data included', function () {",
+              "        pm.expect(jsonData.user.email).to.equal(pm.environment.get('test_email'));",
+              "    });",
+              "} else {",
+              "    pm.test('Login failed', function () {",
+              "        pm.expect.fail('API login should return 201');",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "3. Get Current User (with JWT)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.test('User retrieved successfully', function () {",
+              "        pm.expect(jsonData.user.email).to.equal(pm.environment.get('test_email'));",
+              "    });",
+              "    pm.test('Has user ID', function () {",
+              "        pm.expect(jsonData.user.id).to.be.a('number');",
+              "    });",
+              "    pm.test('Has roles', function () {",
+              "        pm.expect(jsonData.user.roles).to.be.an('array');",
+              "    });",
+              "} else {",
+              "    pm.test('JWT authentication failed', function () {",
+              "        pm.expect.fail('Should be able to get current user with valid JWT');",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/me",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "me"]
+        }
+      }
+    },
+    {
+      "name": "4. Refresh Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set('access_token', jsonData.access_token);",
+              "    pm.test('New access token received', function () {",
+              "        pm.expect(jsonData.access_token).to.be.a('string');",
+              "    });",
+              "} else {",
+              "    pm.test('Token refresh failed', function () {",
+              "        pm.expect.fail('Should be able to refresh token');",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/refresh",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "refresh"]
+        }
+      }
+    },
+    {
+      "name": "5. Logout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/logout",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "logout"]
+        }
+      }
+    },
+    {
+      "name": "Session Tests - Get JWT Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.test('JWT token retrieved from session', function () {",
+              "        pm.expect(jsonData.access_token).to.be.a('string');",
+              "    });",
+              "} else {",
+              "    console.log('Note: This endpoint requires active session from browser login');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/auth/token",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "token"]
+        },
+        "description": "Get JWT for user logged in via session (browser form login)\nNote: This requires the user to be logged in via session first"
+      }
+    }
+  ]
+}
