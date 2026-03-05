@@ -4,12 +4,12 @@ const elDataFaceApi = document.getElementById('dataFaceApi');
 const elForm = document.querySelector('form');
 const submitBtn = elForm.querySelector('button[type="submit"]');
 
-// Load models explicitly (SSD Mobilenet v1 is best for registration quality)
+// Load models explicitly - Use SAME models as login for compatibility
 let modelsLoaded = false;
 async function loadModels() {
     try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+        await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models');
         await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
         modelsLoaded = true;
         console.log("FaceAPI Models Loaded");
@@ -49,16 +49,19 @@ elForm.addEventListener('submit', async (e) => {
             // 1. Convert file to image element
             const img = await faceapi.bufferToImage(file);
             
-            // 2. Compute descriptor using SSD Mobilenet
-            const detection = await faceapi.detectSingleFace(img)
-                .withFaceLandmarks()
-                .withFaceDescriptor();
+            // 2. Detect and compute descriptor - SAME method as login
+            const detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions())
+                .withFaceLandmarks(true);
             
-            if (detection) {
-                // 3. Save to hidden input
-                elDataFaceApi.value = detection.descriptor.toString();
-                // 4. Re-submit form. We use reportValidity() to mimic browser behavior or just submit()
-                // Since we are inside a submit handler, calling elForm.submit() bypasses the handler
+            if (detections.length > 0) {
+                // Compute descriptor for the detected face
+                const descriptor = await faceapi.computeFaceDescriptor(img, detections[0].detection.box);
+                
+                // 3. Convert to CSV string (same format as login)
+                const descArray = Array.from(descriptor);
+                elDataFaceApi.value = descArray.join(',');
+                
+                // 4. Re-submit form
                 elForm.submit(); 
             } else {
                 alert("No face detected! Please use a clear picture.");

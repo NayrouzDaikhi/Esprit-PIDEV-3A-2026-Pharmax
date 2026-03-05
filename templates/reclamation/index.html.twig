@@ -1,66 +1,188 @@
 {% extends 'front_base.html.twig' %}
 
-{% block title %}Réclamations - Pharmax{% endblock %}
+{% block title %}Nouvelle Réclamation - Pharmax{% endblock %}
 
 {% block content %}
 <section style="padding: 40px 0;">
     <div class="container-xxl">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1 class="display-5 fw-bold mb-2">Réclamations</h1>
-                <p class="text-muted">Consultez vos réclamations et vos demandes de support</p>
-            </div>
-        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                {% if app.user %}
+                    <div class="card" style="border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <div class="card-body p-4">
+                            <h1 class="card-title fw-bold mb-4">
+                                <i class="bx bx-message-square-add"></i> Nouvelle Réclamation
+                            </h1>
 
-        <div class="row mb-4">
-            <div class="col-12">
-                <form action="{{ path('frontend_reclamation_index') }}" method="GET" class="input-group mb-3">
-                    <input type="text" id="search-input" name="query" class="form-control" placeholder="Rechercher par titre ou description..." value="{{ search_query }}">
-                </form>
-            </div>
-        </div>
+                          {% if errors.duplicate is defined %}
+                            <div class="alert alert-danger">{{ errors.duplicate }}</div>
+                          {% endif %}
 
-        <div class="row mb-4">
-            <div class="col-12">
-                <a href="{{ path('frontend_reclamation_new') }}" class="btn btn-primary">
-                    <i class="bx bx-plus"></i> Nouvelle Réclamation
-                </a>
-            </div>
-        </div>
+                            <form method="POST" action="{{ path('frontend_reclamation_new') }}" id="reclamationForm" novalidate>
+                                <div class="mb-3">
+                                    <label for="titre" class="form-label fw-bold">Titre <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control {% if errors.titre|default(false) %}is-invalid{% endif %}" 
+                                           id="titre" name="titre" value="{{ titre|default('') }}" placeholder="Résumé de votre réclamation"
+                                           minlength="5" maxlength="255" required>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small class="form-text text-muted">Entre 5 et 255 caractères</small>
+                                        <small class="form-text text-muted"><span id="titreCount">0</span>/255</small>
+                                    </div>
+                                    {% if errors.titre|default(false) %}
+                                        <div class="invalid-feedback d-block">{{ errors.titre }}</div>
+                                    {% endif %}
+                                    <div id="titreValidation" class="d-none mt-2"></div>
+                                </div>
 
-        <div id="reclamation-list">
-            {% include 'reclamation/_reclamation_list.html.twig' with { 'reclamations': reclamations } %}
+                                <div class="mb-4">
+                                    <label for="description" class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+                                    <textarea class="form-control {% if errors.description|default(false) %}is-invalid{% endif %}" 
+                                              id="description" name="description" rows="6" 
+                                              placeholder="Décrivez votre problème en détail..."
+                                              minlength="20" maxlength="2000" required>{{ description|default('') }}</textarea>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small class="form-text text-muted">Entre 20 et 2000 caractères</small>
+                                        <small class="form-text text-muted"><span id="descriptionCount">0</span>/2000</small>
+                                    </div>
+                                    {% if errors.description|default(false) %}
+                                        <div class="invalid-feedback d-block">{{ errors.description }}</div>
+                                    {% endif %}
+                                    <div id="descriptionValidation" class="d-none mt-2"></div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                        <i class="bx bx-send"></i> Soumettre la Réclamation
+                                    </button>
+                                    <a href="{{ path('frontend_reclamation_index') }}" class="btn btn-outline-secondary btn-lg">
+                                        <i class="bx bx-arrow-back"></i> Annuler
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="card" style="border-radius: 12px; border: 1px solid #e0e0e0;">
+                        <div class="card-body p-4 text-center">
+                            <h1 class="card-title fw-bold mb-4">
+                                <i class="bx bx-lock"></i> Authentification Requise
+                            </h1>
+                            <p class="lead mb-4">Vous devez être connecté pour soumettre une réclamation.</p>
+                            <a href="{{ path('app_login') }}" class="btn btn-primary btn-lg me-2">
+                                <i class="bx bx-log-in"></i> Se Connecter
+                            </a>
+                            <a href="{{ path('app_register') }}" class="btn btn-outline-primary btn-lg">
+                                <i class="bx bx-user-plus"></i> S'Inscrire
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </section>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('search-input');
-    const listContainer = document.getElementById('reclamation-list');
-    let debounceTimer;
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('reclamationForm');
+    if (!form) return;
 
-    searchInput.addEventListener('keyup', function () {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(function () {
-            const query = searchInput.value;
-            const url = new URL(window.location.href);
-            url.searchParams.set('query', query);
+    const titreInput = document.getElementById('titre');
+    const descriptionInput = document.getElementById('description');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    const titreCount = document.getElementById('titreCount');
+    const descriptionCount = document.getElementById('descriptionCount');
+    const titreValidation = document.getElementById('titreValidation');
+    const descriptionValidation = document.getElementById('descriptionValidation');
 
-            fetch(url, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-            })
-            .then(response => response.text())
-            .then(html => {
-                listContainer.innerHTML = html;
-            })
-            .catch(error => {
-                console.error('Erreur lors de la recherche:', error);
-            });
-        }, 300); // Délai de 300ms pour éviter les requêtes à chaque frappe
-    });
-});
+    // Update character counters
+    if (titreInput) {
+      titreInput.addEventListener('input', function() {
+        titreCount.textContent = this.value.length;
+        validateTitre();
+      });
+      titreCount.textContent = titreInput.value.length;
+    }
+
+    if (descriptionInput) {
+      descriptionInput.addEventListener('input', function() {
+        descriptionCount.textContent = this.value.length;
+        validateDescription();
+      });
+      descriptionCount.textContent = descriptionInput.value.length;
+    }
+
+    // Validation functions
+    function validateTitre() {
+      const value = titreInput.value.trim();
+      let isValid = true;
+      let message = '';
+
+      if (value.length === 0) {
+        message = '<small class="text-danger">Le titre est obligatoire</small>';
+        isValid = false;
+      } else if (value.length < 5) {
+        message = '<small class="text-warning">Le titre doit contenir au moins 5 caractères</small>';
+        isValid = false;
+      } else {
+        message = '<small class="text-success"><i class="bx bx-check"></i> Titre valide</small>';
+      }
+
+      titreValidation.innerHTML = message;
+      titreValidation.classList.toggle('d-none', value.length === 0);
+      return isValid;
+    }
+
+    function validateDescription() {
+      const value = descriptionInput.value.trim();
+      let isValid = true;
+      let message = '';
+
+      if (value.length === 0) {
+        message = '<small class="text-danger">La description est obligatoire</small>';
+        isValid = false;
+      } else if (value.length < 20) {
+        message = '<small class="text-warning">La description doit contenir au moins 20 caractères</small>';
+        isValid = false;
+      } else {
+        message = '<small class="text-success"><i class="bx bx-check"></i> Description valide</small>';
+      }
+
+      descriptionValidation.innerHTML = message;
+      descriptionValidation.classList.toggle('d-none', value.length === 0);
+      return isValid;
+    }
+
+    // Form submission
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const isTitreValid = validateTitre();
+        const isDescriptionValid = validateDescription();
+
+        if (!isTitreValid || !isDescriptionValid) {
+          e.preventDefault();
+          submitBtn.disabled = true;
+          submitBtn.classList.add('opacity-50');
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-50');
+        }
+      });
+
+      // Enable/disable submit button based on validation
+      const updateSubmitButton = function() {
+        const titreValid = titreInput && titreInput.value.trim().length >= 5;
+        const descriptionValid = descriptionInput && descriptionInput.value.trim().length >= 20;
+        submitBtn.disabled = !(titreValid && descriptionValid);
+        submitBtn.classList.toggle('opacity-50', submitBtn.disabled);
+      };
+
+      if (titreInput) titreInput.addEventListener('input', updateSubmitButton);
+      if (descriptionInput) descriptionInput.addEventListener('input', updateSubmitButton);
+      
+      updateSubmitButton();
+    }
+  });
 </script>
 {% endblock %}

@@ -11,7 +11,6 @@ if (container) {
 
 let displaySize;
 let canvas;
-let hasStartedDetection = false;
 
 // Initialize displaySize as soon as video metadata is available
 webcamElement.addEventListener("loadedmetadata", () => {
@@ -20,14 +19,8 @@ webcamElement.addEventListener("loadedmetadata", () => {
         height: webcamElement.scrollHeight
     };
     console.log("Display size set to:", displaySize);
-
-    if (hasStartedDetection) return; // Guard to avoid double-start
-    hasStartedDetection = true;
-
-    // Video is now fully loaded and ready for canvas creation
-    console.log("✓ Video fully loaded, creating canvas");
-    createCanvas();
-    console.log("✓ Canvas created, starting detection");
+    
+    // Start detection AFTER displaySize is guaranteed to be set
     startDetection();
 });
 
@@ -42,6 +35,8 @@ function startWebcam() {
     navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => { 
             webcamElement.srcObject = stream;
+            // Note: startDetection() will be called from loadedmetadata event listener
+            // Do not call it here - timing would be wrong
             webcamElement.play();
         })
         .catch(err => console.error("Webcam error:", err));
@@ -51,11 +46,6 @@ function startWebcam() {
 let lastDetection = null;
 
 function createCanvas() {
-    if (!displaySize) {
-        console.warn('Display size not set yet; skipping canvas creation');
-        return;
-    }
-
     canvas = faceapi.createCanvasFromMedia(webcamElement);
     canvas.id = 'face-overlay';
     // Critical: Position canvas exactly on top of video
@@ -71,10 +61,7 @@ function createCanvas() {
 }
 
 function startDetection() {
-    if (!canvas) {
-        createCanvas();
-        if (!canvas) return; // Bail if canvas couldn't be created
-    }
+    createCanvas();
 
     setInterval(async () => {
         if (webcamElement.paused || webcamElement.ended) return;
@@ -82,7 +69,17 @@ function startDetection() {
         const detections = await faceapi.detectAllFaces(
             webcamElement,
             new faceapi.TinyFaceDetectorOptions()
-        ).withFaceLandmarks(true);   // true = use tiny landmark model
+        ).withFaceLandmarks(true);     // true = use tiny landmark model
+
+        // Compute descriptors for detected faces
+        const descriptors = await Promise.all(
+            detections.map(d => faceapi.computeFaceDescriptor(webcamElement, d.detection.box))
+        );
+
+        // Attach descriptors to detections
+        detections.forEach((detection, i) => {
+            detection.descriptor = descriptors[i];
+        });
 
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
 

@@ -77,7 +77,7 @@
                 {% for product in popular_products %}
                     <div class="col-md-6 col-lg-4">
                         <div class="product-card animate-scale">
-                            <div class="product-image" style="position: relative;">
+                            <div class="product-image">
                                 {% if product.image %}
                                     <img src="{{ asset('uploads/images/' ~ product.image) }}" alt="{{ product.nom }}" style="height: 250px; object-fit: cover;">
                                 {% else %}
@@ -85,24 +85,14 @@
                                         <i class="bx bx-image" style="font-size: 48px; color: #999;"></i>
                                     </div>
                                 {% endif %}
-                                {% if product.isEnPromotion %}
-                                    <span class="badge bg-warning text-dark" style="position: absolute; top: 8px; right: 8px; font-weight: 700;">En promotion -{{ product.promotionPourcentage }}%</span>
-                                {% endif %}
                             </div>
                             <div class="product-info">
                                 <h5>{{ product.nom }}</h5>
                                 <p class="text-muted" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
-                                    {{ product.description|truncate(60, '...') }}
+                                    {{ product.description }}
                                 </p>
-                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                    <div>
-                                        {% if product.isEnPromotion %}
-                                            <span class="h6 mb-0" style="color: #27ae60; font-weight: 700;">{{ product.prixPromo|number_format(2, ',', ' ') }} DTN</span>
-                                            <small class="text-muted text-decoration-line-through ms-1">{{ product.prix|number_format(2, ',', ' ') }} DTN</small>
-                                        {% else %}
-                                            <span class="h6 mb-0" style="color: #27ae60; font-weight: 700;">{{ product.prix|number_format(2, ',', ' ') }} DTN</span>
-                                        {% endif %}
-                                    </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="h6 mb-0" style="color: #27ae60; font-weight: 700;">{{ product.prix }} DTN</span>
                                     <a href="{{ path('app_front_detail_produit', {id: product.id}) }}" class="btn btn-sm btn-success">
                                         <i class="bx bx-show"></i> Détails
                                     </a>

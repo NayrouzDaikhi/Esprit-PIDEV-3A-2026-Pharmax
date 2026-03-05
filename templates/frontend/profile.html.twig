@@ -24,6 +24,18 @@
                     </div>
                     <h5 class="mb-1">{{ user.fullName }}</h5>
                     <p class="text-muted mb-0">{{ user.email }}</p>
+
+                    {% if not user.isTwoFactorAuthenticationEnabled() %}
+                        <div class="mt-4">
+                            <a href="{{ path('app_2fa_setup') }}" class="btn btn-warning w-100">
+                                <i class="bx bx-shield-quarter me-1"></i> Configurer la 2FA
+                            </a>
+                        </div>
+                    {% else %}
+                         <div class="mt-4 text-success">
+                            <i class="bx bx-check-shield me-1"></i> 2FA Activée
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

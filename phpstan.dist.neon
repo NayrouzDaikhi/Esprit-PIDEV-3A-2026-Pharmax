@@ -1,0 +1,16 @@
+parameters:
+    level: 6
+    paths:
+        - bin/
+        - config/
+        - public/
+        - src/
+        - tests/
+    # This solves the "If condition is always true" for PHPDoc types
+    treatPhpDocTypesAsCertain: false
+    # This ignores the ID assignment issue if you don't have the extension yet
+    checkMissingIterableValueType: false
+
+# If you have the doctrine extension installed:
+doctrine:
+    objectManagerLoader: tests/object-manager.php

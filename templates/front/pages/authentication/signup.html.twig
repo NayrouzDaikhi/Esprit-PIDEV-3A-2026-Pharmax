@@ -92,6 +92,16 @@
       {{ form_errors(form.captcha) }}
     </div>
 
+    <!-- Face API Registration -->
+    <div class="mb-3">
+        <label for="faceImage" class="form-label">Upload a photo for Face Login (optional)</label>
+        <input class="form-control" type="file" id="faceImage" accept="image/*">
+    </div>
+    <input type="hidden" name="dataFaceApi" id="dataFaceApi" value="">
+    <script defer src="{{ asset('js/face-api.min.js') }}"></script>
+    <script defer src="{{ asset('js/register-face.js') }}"></script>
+    <!-- End Face API Registration -->
+
     <button class="btn btn-primary d-grid w-100" type="submit">Sign up</button>
   {{ form_end(form) }}
   {% else %}

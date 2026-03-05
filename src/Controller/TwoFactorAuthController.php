@@ -180,7 +180,7 @@ class TwoFactorAuthController extends AbstractController
             $totp = TOTP::create($secret);
             
             // Verify code (with window of 1 means it will check current and adjacent 30-second windows)
-            if (!$totp->verify($code)) {
+            if (!$totp->verify($code, null, 1)) {
                 return new JsonResponse([
                     'success' => false,
                     'message' => 'Invalid authentication code. Please try again.',

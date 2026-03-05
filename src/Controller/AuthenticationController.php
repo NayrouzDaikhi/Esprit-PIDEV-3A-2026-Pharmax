@@ -96,6 +96,12 @@ public function login(AuthenticationUtils $authenticationUtils, Request $request
             $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
             $user->setPassword($hashedPassword);
 
+            // Handle Face API registration
+            $dataFaceApi = $request->request->get('dataFaceApi');
+            if ($dataFaceApi) {
+                $user->setDataFaceApi($dataFaceApi);
+            }
+
             // Persist user
             $entityManager->persist($user);
             $entityManager->flush();

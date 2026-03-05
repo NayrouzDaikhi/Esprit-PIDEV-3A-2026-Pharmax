@@ -2,9 +2,10 @@
 
 namespace App\EventSubscriber;
 
+use App\Entity\User;
 use App\Service\JwtTokenService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
+use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 use Psr\Log\LoggerInterface;
 
 class JwtGenerationSubscriber implements EventSubscriberInterface
@@ -17,17 +18,32 @@ class JwtGenerationSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            InteractiveLoginEvent::class => 'onInteractiveLogin',
+            // LoginSuccessEvent fires AFTER full authentication (including 2FA verification)
+            // This prevents JWT generation before 2FA is completed
+            LoginSuccessEvent::class => 'onLoginSuccess',
         ];
     }
 
     /**
-     * Generate JWT token immediately after successful session login
+     * Generate JWT token AFTER successful login AND 2FA verification.
+     * 
+     * SECURITY NOTE: LoginSuccessEvent is fired ONLY after:
+     * 1. Credentials validated (email/password)
+     * 2. User status verified (not blocked)
+     * 3. 2FA verification completed (if enabled)
+     * 
+     * This prevents the 2FA bypass vulnerability where JWT was issued before 2FA.
      */
-    public function onInteractiveLogin(InteractiveLoginEvent $event): void
+    public function onLoginSuccess(LoginSuccessEvent $event): void
     {
         $request = $event->getRequest();
-        $user = $event->getAuthenticationToken()->getUser();
+        $user = $event->getAuthenticatedToken()->getUser();
+
+        // Type guard: only process if user is our User entity
+        if (!$user instanceof User) {
+            $this->logger->info('JWT generation skipped - not a User entity');
+            return;
+        }
 
         // Skip if JWT service is not enabled
         if (!$this->jwtTokenService->isEnabled()) {
@@ -37,6 +53,8 @@ class JwtGenerationSubscriber implements EventSubscriberInterface
 
         try {
             // Generate JWT token pair
+            // At this point, 2FA has been verified (if required) since LoginSuccessEvent
+            // is only fired after FULL authentication chain completes
             $tokenPair = $this->jwtTokenService->generateTokenPair($user);
             
             // Store in session so frontend can retrieve it
@@ -51,7 +69,7 @@ class JwtGenerationSubscriber implements EventSubscriberInterface
                 'user' => $tokenPair['user'],
             ]);
 
-            $this->logger->info("JWT tokens generated and stored in session for user: {$user->getEmail()}");
+            $this->logger->info("JWT tokens generated and stored in session for user: {$user->getEmail()} (2FA verified)");
         } catch (\Exception $e) {
             // Don't fail the login if JWT generation fails
             $this->logger->error("Failed to generate JWT during session login: " . $e->getMessage());

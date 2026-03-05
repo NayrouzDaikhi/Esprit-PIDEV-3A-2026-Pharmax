@@ -19,6 +19,11 @@
         "knplabs/knp-paginator-bundle": "^6.10",
         "knpuniversity/oauth2-client-bundle": "^2.20",
         "league/oauth2-google": "^4.1",
+        "firebase/php-jwt": "^6.10",
+        "lexik/jwt-authentication-bundle": "^2.18",
+        "nelmio/cors-bundle": "*",
+        "scheb/2fa-bundle": "^7.13",
+        "scheb/2fa-google-authenticator": "^7.13",
         "phpdocumentor/reflection-docblock": "5.2",
         "phpstan/phpdoc-parser": "^2.3",
         "stichoza/google-translate-php": "^5.3",
@@ -108,6 +113,8 @@
         }
     },
     "require-dev": {
+        "ahmed-bhs/doctrine-doctor": "^1.0",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^9.5",
         "symfony/browser-kit": "6.4.*",
         "symfony/css-selector": "6.4.*",

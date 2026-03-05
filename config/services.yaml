@@ -8,6 +8,12 @@ parameters:
     gemini_api_key: '%env(GEMINI_API_KEY)%'
     stripe_public_key: '%env(STRIPE_PUBLIC_KEY)%'
     stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
+    jwt_secret_key: '%kernel.project_dir%/config/jwt/private.pem'
+    jwt_public_key: '%kernel.project_dir%/config/jwt/public.pem'
+    jwt_passphrase: '%env(JWT_PASSPHRASE)%'
+    jwt_token_ttl: '%env(int:JWT_TOKEN_TTL)%'
+    jwt_refresh_token_ttl: '%env(int:JWT_REFRESH_TOKEN_TTL)%'
+
 
 services:
     # default configuration for services in *this* file
@@ -48,5 +54,19 @@ services:
             $translationService: '@App\Service\GoogleTranslationService'
 
     App\Service\OllamaService: ~
-    
+
+    App\Service\JwtTokenService:
+        arguments:
+            $tokenTtl: '%jwt_token_ttl%'
+            $refreshTokenTtl: '%jwt_refresh_token_ttl%'
+
+    App\Security\JwtAuthenticator:
+        arguments:
+            $jwtPublicKey: '%jwt_public_key%'
+
+    App\Controller\Api\AuthController:
+        arguments:
+            $jwtPublicKey: '%jwt_public_key%'
+            $tokenTtl: '%jwt_token_ttl%'
+
     App\Service\ArticleSearchService: ~

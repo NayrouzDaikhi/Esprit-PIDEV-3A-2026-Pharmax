@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class FaceAuthController extends AbstractController
 {
-    const THRESHOLD = 0.5; // Increased slightly for SSD Mobilenet tolerance
+    const THRESHOLD = 0.6; // Threshold for TinyFaceDetector euclidean distance
 
     #[Route(path: '/api/face-recognition', name: 'app_faceRecognition', methods: ['POST'])]
     public function faceRecognition(Request $request, UserRepository $userRepository): Response
