@@ -21,14 +21,16 @@ class AdminEmailDigestService
     /**
      * Send daily digest to admins
      */
-    public function sendDailyDigest(string $adminEmail, \DateTimeInterface $date = null): bool
+    public function sendDailyDigest(string $adminEmail, ?\DateTimeInterface $date = null): bool
     {
         if ($date === null) {
             $date = new \DateTime();
         }
 
-        $dateStart = (clone $date)->setTime(0, 0, 0);
-        $dateEnd = (clone $date)->setTime(23, 59, 59);
+        // Cast to DateTime for method calls
+        $dateTime = $date instanceof \DateTime ? $date : new \DateTime($date->format('Y-m-d H:i:s'));
+        $dateStart = (clone $dateTime)->setTime(0, 0, 0);
+        $dateEnd = (clone $dateTime)->setTime(23, 59, 59);
 
         // Get orders from today
         $qb = $this->commandeRepository->createQueryBuilder('c')
@@ -88,14 +90,16 @@ class AdminEmailDigestService
     /**
      * Send weekly digest to admins
      */
-    public function sendWeeklyDigest(string $adminEmail, \DateTimeInterface $date = null): bool
+    public function sendWeeklyDigest(string $adminEmail, ?\DateTimeInterface $date = null): bool
     {
         if ($date === null) {
             $date = new \DateTime();
         }
 
-        $dateStart = (clone $date)->modify('-7 days')->setTime(0, 0, 0);
-        $dateEnd = (clone $date)->setTime(23, 59, 59);
+        // Cast to DateTime for method calls
+        $dateTime = $date instanceof \DateTime ? $date : new \DateTime($date->format('Y-m-d H:i:s'));
+        $dateStart = (clone $dateTime)->modify('-7 days')->setTime(0, 0, 0);
+        $dateEnd = (clone $dateTime)->setTime(23, 59, 59);
 
         // Get orders from last 7 days
         $orders = $this->commandeRepository->createQueryBuilder('c')

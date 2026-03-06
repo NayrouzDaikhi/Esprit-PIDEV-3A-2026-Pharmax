@@ -51,7 +51,8 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
                     throw new AuthenticationException('Unable to get email from Google');
                 }
 
-                // Try to find existing user by email
+                // Try to find existing user by email (with fresh database lookup)
+                $this->entityManager->clear(); // Clear cache to get fresh data from DB
                 $user = $this->userRepository->findOneBy(['email' => $email]);
 
                 if (!$user) {
@@ -68,6 +69,19 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
                     $user->setPassword($randomPassword);
                     
                     $user->setCreatedAt(new \DateTime());
+                    
+                    try {
+                        $this->entityManager->persist($user);
+                        $this->entityManager->flush();
+                    } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+                        // Race condition: another request already created this user
+                        // Clear and fetch again
+                        $this->entityManager->clear();
+                        $user = $this->userRepository->findOneBy(['email' => $email]);
+                        if (!$user) {
+                            throw new AuthenticationException('Failed to create or retrieve user for email: ' . $email);
+                        }
+                    }
                 } else {
                     // Update existing user
                     $user->setUpdatedAt(new \DateTime());
@@ -78,8 +92,13 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
                 $user->setAvatar($googleUser->getAvatar());
 
                 // Persist changes
-                $this->entityManager->persist($user);
-                $this->entityManager->flush();
+                try {
+                    $this->entityManager->persist($user);
+                    $this->entityManager->flush();
+                } catch (\Exception $e) {
+                    // Log but don't fail - user is valid for login
+                    error_log('Failed to update user: ' . $e->getMessage());
+                }
 
                 return $user;
             }),

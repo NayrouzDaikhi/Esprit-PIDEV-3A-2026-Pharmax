@@ -9,6 +9,7 @@ use App\Repository\CommentaireRepository;
 use App\Repository\ProduitRepository;
 use App\Service\GoogleTranslationService;
 use App\Service\CommentModerationService;
+use App\Service\CommentValidationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -216,6 +217,9 @@ class BlogController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
         
         $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User) {
+            throw $this->createAccessDeniedException('User must be logged in');
+        }
         
         $article = $articleRepository->find($id);
 
@@ -335,12 +339,16 @@ class BlogController extends AbstractController
         ProduitRepository $produitRepository, 
         EntityManagerInterface $entityManager, 
         Request $request,
-        CommentModerationService $moderationService
+        CommentModerationService $moderationService,
+        CommentValidationService $commentValidationService
     ): JsonResponse {
         // Require user to be authenticated
         $this->denyAccessUnlessGranted('ROLE_USER');
         
-        $user = $this->getUser();
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof \App\Entity\User) {
+            return new JsonResponse(['error' => 'User not authenticated'], Response::HTTP_UNAUTHORIZED);
+        }
         
         $produit = $produitRepository->find((int)$id);
 
@@ -350,15 +358,11 @@ class BlogController extends AbstractController
 
         $contenu = $request->request->get('contenu', '');
 
-        if (empty(trim($contenu)) || strlen(trim($contenu)) < 2) {
+        // Validate content using dedicated service
+        $validationErrors = $commentValidationService->validateContent($contenu);
+        if (!empty($validationErrors)) {
             return new JsonResponse([
-                'error' => 'L\'avis doit contenir au minimum 2 caractères'
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (strlen($contenu) > 1000) {
-            return new JsonResponse([
-                'error' => 'L\'avis ne doit pas dépasser 1000 caractères'
+                'error' => $validationErrors[0]
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -379,7 +383,7 @@ class BlogController extends AbstractController
         $commentaire = new Commentaire();
         $commentaire->setContenu($contenu);
         $commentaire->setProduit($produit);
-        $commentaire->setUser($user);
+        $commentaire->setUser($currentUser);
         $commentaire->setStatut('valide');
         $commentaire->setDatePublication(new \DateTime());
 
@@ -403,7 +407,7 @@ class BlogController extends AbstractController
     public function saveArticle(int $id, ArticleRepository $articleRepository, EntityManagerInterface $entityManager): JsonResponse
     {
         $user = $this->getUser();
-        if (!$user) {
+        if (!$user instanceof \App\Entity\User) {
             return new JsonResponse(['error' => 'Unauthorized'], 401);
         }
 
@@ -424,7 +428,7 @@ class BlogController extends AbstractController
     public function unsaveArticle(int $id, ArticleRepository $articleRepository, EntityManagerInterface $entityManager): JsonResponse
     {
         $user = $this->getUser();
-        if (!$user) {
+        if (!$user instanceof \App\Entity\User) {
             return new JsonResponse(['error' => 'Unauthorized'], 401);
         }
 
@@ -447,6 +451,10 @@ class BlogController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
         
         $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User) {
+            throw $this->createAccessDeniedException('User must be logged in');
+        }
+        
         $savedArticles = $user->getSavedArticles()->toArray();
 
         // Sort articles by newest first

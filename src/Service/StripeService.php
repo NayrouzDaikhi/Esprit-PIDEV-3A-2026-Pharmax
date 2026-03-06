@@ -126,7 +126,7 @@ class StripeService
     /**
      * Verify webhook signature and return decoded event
      */
-    public function verifyWebhook(string $payload, string $signature): array
+    public function verifyWebhook(string $payload, string $signature): \Stripe\Event
     {
         try {
             return Webhook::constructEvent(

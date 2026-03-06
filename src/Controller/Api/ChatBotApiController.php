@@ -14,7 +14,7 @@ class ChatBotApiController extends AbstractController
     public function __construct(
         private \App\Service\ChatBotService $chatBotService,
     ) {
-        error_log('ChatBotApiController: Constructor called, ChatBotService is ' . ($this->chatBotService ? 'INJECTED' : 'NULL'));
+        error_log('ChatBotApiController: Constructor called, ChatBotService is INJECTED');
     }
 
     /**
@@ -80,24 +80,20 @@ class ChatBotApiController extends AbstractController
             }
 
             // Try to get answer from ChatBotService
-            if ($this->chatBotService) {
-                try {
-                    // Support both snake_case (from frontend) and camelCase (legacy)
-                    $articleId = $data['article_id'] ?? $data['articleId'] ?? null;
-                    $articleTitle = $data['article_title'] ?? $data['articleTitle'] ?? null;
-                    
-                    error_log('ChatBotApiController::ask: Received question with article_id=' . ($articleId ?? 'null') . ' article_title=' . ($articleTitle ?? 'null'));
-                    
-                    $response = $this->chatBotService->answerQuestion($question, $articleId, $articleTitle);
-                    error_log('ChatBotApiController::ask: Got response from ChatBotService: success=' . ($response['success'] ? 'true' : 'false'));
-                    
-                    return $this->addCorsHeaders($this->json($response));
-                } catch (\Throwable $e) {
-                    error_log('ChatBot service error: ' . $e->getMessage() . ' | ' . $e->getTraceAsString());
-                    // Fall through to fallback
-                }
-            } else {
-                error_log('ChatBotApiController::ask: ChatBotService is NULL - using fallback!');
+            try {
+                // Support both snake_case (from frontend) and camelCase (legacy)
+                $articleId = $data['article_id'] ?? $data['articleId'] ?? null;
+                $articleTitle = $data['article_title'] ?? $data['articleTitle'] ?? null;
+                
+                error_log('ChatBotApiController::ask: Received question with article_id=' . ($articleId ?? 'null') . ' article_title=' . ($articleTitle ?? 'null'));
+                
+                $response = $this->chatBotService->answerQuestion($question, $articleId, $articleTitle);
+                error_log('ChatBotApiController::ask: Got response from ChatBotService: success=' . ($response['success'] ? 'true' : 'false'));
+                
+                return $this->addCorsHeaders($this->json($response));
+            } catch (\Throwable $e) {
+                error_log('ChatBot service error: ' . $e->getMessage() . ' | ' . $e->getTraceAsString());
+                // Fall through to fallback
             }
 
             // Fallback response if service fails
@@ -171,7 +167,7 @@ class ChatBotApiController extends AbstractController
     {
         return $this->addCorsHeaders($this->json([
             'status' => 'ok',
-            'api_configured' => $this->chatBotService !== null,
+            'api_configured' => true,
             'message' => 'ChatBot API is running'
         ]));
     }
@@ -182,18 +178,16 @@ class ChatBotApiController extends AbstractController
     #[Route('/status', name: 'status', methods: ['GET'])]
     public function status(): JsonResponse
     {
-        $status = 'unknown';
-        $configured = false;
-
-        if ($this->chatBotService) {
-            $configured = $this->chatBotService->isConfigured();
-            $status = $configured ? 'configured' : 'not_configured';
-        }
+        // Check if ChatBotService has isConfigured method, otherwise assume it's configured
+        $configured = method_exists($this->chatBotService, 'isConfigured') 
+            ? $this->chatBotService->isConfigured() 
+            : true;
+        $status = $configured ? 'configured' : 'not_configured';
 
         return $this->addCorsHeaders($this->json([
             'status' => $status,
             'ollama_configured' => $configured,
-            'service_available' => $this->chatBotService !== null
+            'service_available' => true
         ]));
     }
 }

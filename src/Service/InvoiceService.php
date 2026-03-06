@@ -4,16 +4,12 @@ namespace App\Service;
 
 use App\Entity\Commande;
 use Dompdf\Dompdf;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Environment;
 
 class InvoiceService
 {
     public function __construct(
         private Environment $twig,
-        private ParameterBagInterface $params,
-        private UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
@@ -91,7 +87,7 @@ class InvoiceService
     {
         $year = $commande->getCreatedAt()->format('Y');
         $month = $commande->getCreatedAt()->format('m');
-        $id = str_pad($commande->getId(), 6, '0', STR_PAD_LEFT);
+        $id = str_pad((string)($commande->getId() ?? 0), 6, '0', STR_PAD_LEFT);
 
         return "INV-{$year}-{$month}-{$id}";
     }
@@ -102,11 +98,17 @@ class InvoiceService
     public function getInvoiceData(Commande $commande): array
     {
         $invoiceNumber = $this->generateInvoiceNumber($commande);
+        $createdAt = $commande->getCreatedAt();
+        
+        // Cast to DateTime for method calls
+        $createdDateTime = $createdAt instanceof \DateTime 
+            ? $createdAt 
+            : new \DateTime($createdAt->format('Y-m-d H:i:s'));
 
         return [
             'invoiceNumber' => $invoiceNumber,
-            'invoiceDate' => $commande->getCreatedAt()->format('Y-m-d'),
-            'dueDate' => (clone $commande->getCreatedAt())->modify('+30 days')->format('Y-m-d'),
+            'invoiceDate' => $createdAt->format('Y-m-d'),
+            'dueDate' => (clone $createdDateTime)->modify('+30 days')->format('Y-m-d'),
             'orderId' => $commande->getId(),
             'totalAmount' => $commande->getTotales(),
             'status' => $commande->getStatut(),

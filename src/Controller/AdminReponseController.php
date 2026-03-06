@@ -108,9 +108,14 @@ class AdminReponseController extends AbstractController
         if ($request->isMethod('POST')) {
             $contenu = trim($request->request->get('contenu', ''));
             $contenu = strip_tags($contenu);
+            
+            $user = $this->getUser();
+            if (!$user instanceof \App\Entity\User) {
+                throw $this->createAccessDeniedException('User must be authenticated');
+            }
 
             $reponse->setContenu($contenu);
-            $reponse->setUser($this->getUser());
+            $reponse->setUser($user);
 
             $this->em->persist($reponse);
             $this->em->flush();

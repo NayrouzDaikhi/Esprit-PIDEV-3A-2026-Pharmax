@@ -215,8 +215,13 @@ class AdminReclamationController extends AbstractController
         $reponseForm->handleRequest($request);
 
         if ($reponseForm->isSubmitted() && $reponseForm->isValid()) {
+            $user = $this->getUser();
+            if (!$user instanceof \App\Entity\User) {
+                throw $this->createAccessDeniedException('User must be authenticated');
+            }
+            
             $reponse->setReclamation($reclamation);
-            $reponse->setUser($this->getUser());
+            $reponse->setUser($user);
             $reponse->setDateReponse(new \DateTime());
 
             $this->em->persist($reponse);

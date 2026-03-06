@@ -15,7 +15,7 @@ class GeminiService
         $this->apiKey = $apiKey;
     }
 
-    public function generateExpirationMessage($productName, $days)
+    public function generateExpirationMessage(string $productName, int $days): string
     {
         try {
             return $this->callGeminiApi($productName, $days);

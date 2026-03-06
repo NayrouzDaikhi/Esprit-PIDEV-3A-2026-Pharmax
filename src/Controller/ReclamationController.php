@@ -56,6 +56,10 @@ class ReclamationController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
         
         $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User) {
+            throw $this->createAccessDeniedException('User must be logged in');
+        }
+        
         $errors = [];
         $titre = '';
         $description = '';
@@ -82,63 +86,34 @@ class ReclamationController extends AbstractController
                     $titre = strip_tags($titre);
                     $description = strip_tags($description);
 
-                    // Vérifier si l'utilisateur a déjà soumis une réclamation identique aujourd'hui
-                    $startOfDay = (new \DateTime())->setTime(0, 0, 0);
-                    $endOfDay = (new \DateTime())->setTime(23, 59, 59);
+                    // Création de l'entité
+                    $reclamation = new Reclamation();
+                    $reclamation->setTitre($titre);
+                    $reclamation->setDescription($description);
+                    $reclamation->setUser($user); // Track the logged-in user
 
-                    $qb = $this->em->getRepository(Reclamation::class)
-                        ->createQueryBuilder('r')
-                        ->andWhere('r.user = :user')
-                        ->andWhere('r.titre = :titre')
-                        ->andWhere('r.description = :description')
-                        ->andWhere('r.dateCreation BETWEEN :start AND :end')
-                        ->setParameter('user', $user)
-                        ->setParameter('titre', $titre)
-                        ->setParameter('description', $description)
-                        ->setParameter('start', $startOfDay)
-                        ->setParameter('end', $endOfDay)
-                        ->setMaxResults(1);
+                    // Valider l'entité avec Symfony Validator
+                    $violations = $this->validator->validate($reclamation);
 
-                    $existing = $qb->getQuery()->getOneOrNullResult();
-
-                    if ($existing !== null) {
-                        $errors['duplicate'] = 'Vous avez déjà soumis une réclamation identique aujourd\'hui.';
-                    } else {
-                        // Création de l'entité
-                        $reclamation = new Reclamation();
-                        $reclamation->setTitre($titre);
-                        $reclamation->setDescription($description);
-                        $reclamation->setUser($user); // Track the logged-in user
-                    }
-
-                    // Si une nouvelle réclamation a été créée (pas de doublon), valider et persister
-                    if (isset($reclamation)) {
-                        // Valider l'entité avec Symfony Validator
-                        $violations = $this->validator->validate($reclamation);
-
-                        if (count($violations) > 0) {
-                            // Collecter les erreurs de validation
-                            foreach ($violations as $violation) {
-                                $propertyPath = $violation->getPropertyPath();
-                                $errors[$propertyPath] = $violation->getMessage();
-                            }
-                        } else {
-                            // Si pas d'erreurs, créer la réclamation
-                            $reclamation->setStatut('En attente');
-                            $this->em->persist($reclamation);
-                            $this->em->flush();
-
-                            // Envoyer l'e-mail de confirmation (vérifier le type concret de l'utilisateur)
-                            $userEmail = null;
-                            if ($user instanceof \App\Entity\User && method_exists($user, 'getEmail')) {
-                                $userEmail = $user->getEmail();
-                            }
-                            if ($userEmail) {
-                                $this->emailService->sendReclamationConfirmationEmail($reclamation, $userEmail);
-                            }
-
-                            return $this->redirectToRoute('frontend_reclamation_show', ['id' => $reclamation->getId()]);
+                    if (count($violations) > 0) {
+                        // Collecter les erreurs de validation
+                        foreach ($violations as $violation) {
+                            $propertyPath = $violation->getPropertyPath();
+                            $errors[$propertyPath] = $violation->getMessage();
                         }
+                    } else {
+                        // Si pas d'erreurs, créer la réclamation
+                        $reclamation->setStatut('En attente');
+                        $this->em->persist($reclamation);
+                        $this->em->flush();
+
+                        // Envoyer l'e-mail de confirmation
+                        $userEmail = $user->getEmail();
+                        if ($userEmail) {
+                            $this->emailService->sendReclamationConfirmationEmail($reclamation, $userEmail);
+                        }
+
+                        return $this->redirectToRoute('frontend_reclamation_show', ['id' => $reclamation->getId()]);
                     }
                 }
             }
@@ -158,6 +133,9 @@ class ReclamationController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
         
         $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User) {
+            throw $this->createAccessDeniedException('User must be logged in');
+        }
         
         // Check if the user owns this reclamation or is an admin
         if ($reclamation->getUser() !== $user && !$this->isGranted('ROLE_ADMIN')) {
@@ -173,8 +151,13 @@ class ReclamationController extends AbstractController
     public function translateReponse(Reclamation $reclamation, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
+        
+        $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User) {
+            return new JsonResponse(['error' => 'Unauthorized'], 401);
+        }
 
-        if ($reclamation->getUser() !== $this->getUser() && !$this->isGranted('ROLE_ADMIN')) {
+        if ($reclamation->getUser() !== $user && !$this->isGranted('ROLE_ADMIN')) {
             return new JsonResponse(['error' => 'Access denied'], Response::HTTP_FORBIDDEN);
         }
 
@@ -203,6 +186,9 @@ class ReclamationController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
         
         $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User) {
+            throw $this->createAccessDeniedException('User must be logged in');
+        }
         
         // Check if the user owns this reclamation
         if ($reclamation->getUser() !== $user) {
@@ -276,6 +262,9 @@ class ReclamationController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
         
         $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User) {
+            throw $this->createAccessDeniedException('User must be logged in');
+        }
         
         // Check if the user owns this reclamation
         if ($reclamation->getUser() !== $user) {
