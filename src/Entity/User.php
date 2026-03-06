@@ -71,6 +71,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinTable(name: 'user_saved_articles')]
     private Collection $savedArticles;
 
+    #[ORM\Column(type: 'text', nullable: true, name: 'data_face_api')]
+    private ?string $dataFaceApi = null;
+
     public function __construct()
     {
         $this->commandes = new ArrayCollection();
@@ -295,6 +298,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function hasSavedArticle(Article $article): bool
     {
         return $this->savedArticles->contains($article);
+    }
+
+    public function getDataFaceApi(): ?string
+    {
+        return $this->dataFaceApi;
+    }
+
+    public function setDataFaceApi(?string $dataFaceApi): static
+    {
+        $this->dataFaceApi = $dataFaceApi;
+
+        return $this;
     }
 
         /**
