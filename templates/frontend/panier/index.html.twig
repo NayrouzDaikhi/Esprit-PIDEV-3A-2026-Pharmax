@@ -160,6 +160,16 @@
 
                     <!-- Formulaire de livraison + action -->
                     {{ form_start(livraisonForm, {'attr': {'class': 'mb-3'}}) }}
+                        {% if livraisonForm.vars.valid is defined and not livraisonForm.vars.valid %}
+                            <div class="alert alert-danger mb-3" style="border-radius: 8px;">
+                                <i class="bx bx-error-circle"></i> <strong>Veuillez corriger les erreurs ci-dessous :</strong>
+                                <ul class="mb-0 mt-1">
+                                    {% for error in livraisonForm.vars.errors %}
+                                        <li>{{ error.message }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
                         <h6 class="fw-bold mb-3">Informations de livraison</h6>
 
                         <div class="mb-3">
@@ -189,12 +199,12 @@
                         <i class="bx bx-trash"></i> Vider le Panier
                     </a>
 
-                    <!-- Info de Sécurité -->
+                    <!-- Info Commande -->
                     <div class="alert alert-info mt-4 mb-0" style="border-radius: 8px; border: 1px solid #d1ecf1;">
                         <div class="d-flex gap-2 align-items-start">
-                            <i class="bx bx-lock-alt" style="font-size: 1.2rem; color: #0c5460;"></i>
+                            <i class="bx bx-info-circle" style="font-size: 1.2rem; color: #0c5460;"></i>
                             <small style="color: #0c5460;">
-                                Vos paiements sont sécurisés avec les dernières technologies de chiffrement.
+                                Après validation, vous recevrez un email de confirmation avec les détails de votre commande.
                             </small>
                         </div>
                     </div>

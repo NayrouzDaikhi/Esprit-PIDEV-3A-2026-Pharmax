@@ -4,14 +4,12 @@ namespace App\Service;
 
 use App\Repository\CommandeRepository;
 use App\Repository\ReclamationRepository;
-use App\Repository\PaymentRepository;
 
 class ReportingService
 {
     public function __construct(
         private CommandeRepository $commandeRepository,
         private ReclamationRepository $reclamationRepository,
-        private PaymentRepository $paymentRepository,
     ) {
     }
 
@@ -84,29 +82,12 @@ class ReportingService
      */
     public function getPaymentStats(): array
     {
-        $successful = $this->paymentRepository->findSuccessful();
-        $failed = $this->paymentRepository->findFailed();
-
-        $totalSuccessful = 0;
-        foreach ($successful as $payment) {
-            $totalSuccessful += (float) $payment->getMontant();
-        }
-
-        $totalFailed = 0;
-        foreach ($failed as $payment) {
-            $totalFailed += (float) $payment->getMontant();
-        }
-
-        $successRate = (count($successful) + count($failed)) > 0 
-            ? (count($successful) / (count($successful) + count($failed))) * 100 
-            : 0;
-
         return [
-            'successful' => count($successful),
-            'failed' => count($failed),
-            'totalSuccessful' => $totalSuccessful,
-            'totalFailed' => $totalFailed,
-            'successRate' => round($successRate, 2),
+            'successful' => 0,
+            'failed' => 0,
+            'totalSuccessful' => 0,
+            'totalFailed' => 0,
+            'successRate' => 0,
         ];
     }
 

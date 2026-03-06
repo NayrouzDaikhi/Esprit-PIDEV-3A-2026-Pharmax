@@ -120,8 +120,8 @@
 
             <div class="invoice-section">
                 <p><strong>Order Status:</strong> {{ commande.statut|upper }}</p>
-                {% if stripePaymentId %}
-                <p><strong>Payment ID:</strong> {{ stripePaymentId }}</p>
+                {% if paymentId %}
+                <p><strong>Payment ID:</strong> {{ paymentId }}</p>
                 {% endif %}
             </div>
 

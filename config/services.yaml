@@ -6,8 +6,7 @@
 parameters:
     huggingface_api_key: '%env(HUGGINGFACE_API_KEY)%'
     gemini_api_key: '%env(GEMINI_API_KEY)%'
-    stripe_public_key: '%env(STRIPE_PUBLIC_KEY)%'
-    stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
+
     jwt_public_key: '%env(file:JWT_PUBLIC_KEY_FILE)%'
 
 services:
@@ -35,11 +34,7 @@ services:
         arguments:
             $apiKey: '%gemini_api_key%'
 
-    App\Service\StripeService:
-        arguments:
-            $stripeSecretKey: '%stripe_secret_key%'
-            $stripePublishableKey: '%stripe_public_key%'
-            $webhookSecret: '%env(STRIPE_WEBHOOK_SECRET)%'
+
 
     App\Controller\Api\AuthController:
         arguments:

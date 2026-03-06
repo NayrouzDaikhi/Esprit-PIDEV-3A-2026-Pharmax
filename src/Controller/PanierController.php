@@ -254,11 +254,6 @@ class PanierController extends AbstractController
 
         $form = $this->createForm(LivraisonType::class, $livraison);
         $form->handleRequest($request);
-        
-        $logger->info('Form submission status', [
-            'is_submitted' => $form->isSubmitted(),
-            'is_valid' => $form->isValid(),
-        ]);
 
         if (!$form->isSubmitted() || !$form->isValid()) {
             if ($form->isSubmitted() && !$form->isValid()) {
@@ -324,87 +319,24 @@ class PanierController extends AbstractController
         // Associer et enregistrer la livraison
         $livraison->setCommande($commande);
         $em->persist($livraison);
-        
-        $logger->info('Entities marked for persist before flush', [
-            'commande_id' => $commande->getId(),
-            'livraison_id' => $livraison->getId(),
-        ]);
 
-        // COMMIT THE COMMAND TO THE DATABASE - CRITICAL!
         try {
-            // Begin transaction explicitly
-            if (!$em->getConnection()->isConnected()) {
-                $logger->warning('Database connection not ready, re-establishing...');
-                $em->getConnection()->connect();
-            }
-            
-            $logger->info('BEFORE flush() call', [
-                'commande_id' => $commande->getId(),
-            ]);
             $em->flush();
-            $logger->info('AFTER flush() call - SUCCESS', [
-                'commande_id' => $commande->getId(),
-            ]);
-            
-            // Explicitly commit to ensure persistence
-            if ($em->getConnection()->isTransactionActive()) {
-                $logger->info('Committing active transaction');
-                // flush() already commits, but double-check
-            }
-            
         } catch (\Exception $e) {
-            $logger->error('FLUSH FAILED', [
+            $logger->error('Flush failed', [
                 'error' => $e->getMessage(),
-                'class' => get_class($e),
-                'code' => $e->getCode(),
-                'trace' => $e->getTraceAsString(),
             ]);
             $this->addFlash('error', 'Erreur lors de la création de la commande: ' . $e->getMessage());
             return $this->redirectToRoute('app_panier_index');
         }
 
-        // VERIFY THE COMMAND WAS SAVED AND HAS AN ID
         $commandeId = $commande->getId();
         if (!$commandeId) {
-            $logger->error('CRITICAL: Command has no ID after flush', [
-                'commande_id' => $commandeId,
-            ]);
             $this->addFlash('error', 'Erreur: La commande n\'a pas pu être créée correctement.');
             return $this->redirectToRoute('app_panier_index');
         }
         
-        $logger->info('Command ID verified after flush', [
-            'commande_id' => $commandeId,
-        ]);
-        
-        // ABSOLUTELY VERIFY IN DATABASE - No trust to Doctrine
-        try {
-            $connection = $em->getConnection();
-            $stmt = $connection->prepare('SELECT id FROM commandes WHERE id = ?');
-            $result = $stmt->executeQuery([(int)$commandeId]);
-            $row = $result->fetchAssociative();
-            
-            if (!$row) {
-                $logger->error('CRITICAL: Database verification FAILED - command not found in database!', [
-                    'commande_id' => $commandeId,
-                    'query' => 'SELECT id FROM commandes WHERE id = ?',
-                ]);
-                $this->addFlash('error', 'Erreur: La commande n\'a pas pu être sauvegardée en base de données.');
-                return $this->redirectToRoute('app_panier_index');
-            }
-            
-            $logger->info('Database verification SUCCESS', [
-                'commande_id' => $commandeId,
-                'row' => $row,
-            ]);
-        } catch (\Exception $e) {
-            $logger->error('Database verification exception', [
-                'error' => $e->getMessage(),
-                'commande_id' => $commandeId,
-            ]);
-            $this->addFlash('error', 'Erreur lors de la vérification en base de données: ' . $e->getMessage());
-            return $this->redirectToRoute('app_panier_index');
-        }
+        $logger->info('Order created successfully', ['commande_id' => $commandeId]);
 
         if ($risk >= 70) {
             // Alerte visible côté client
@@ -426,7 +358,14 @@ class PanierController extends AbstractController
                     $risk
                 ));
 
-            $mailer->send($adminEmail);
+            try {
+                $mailer->send($adminEmail);
+            } catch (\Exception $e) {
+                $logger->error('Failed to send fraud alert email', [
+                    'error' => $e->getMessage(),
+                    'commande_id' => $commande->getId(),
+                ]);
+            }
 
             // Ne pas lancer le paiement, laisser la commande bloquée pour admin
             $session->set('panier', []);
@@ -434,7 +373,7 @@ class PanierController extends AbstractController
             return $this->redirectToRoute('app_commande_show', ['id' => $commandeId]);
         }
 
-        // Cas normal : confirmation + paiement Stripe
+        // Cas normal : confirmation par email
         $email = (new TemplatedEmail())
             ->from('no-reply@pharmax.com')
             ->to($user->getEmail())
@@ -445,17 +384,20 @@ class PanierController extends AbstractController
                 'commande' => $commande,
             ]);
 
-        $mailer->send($email);
+        try {
+            $mailer->send($email);
+        } catch (\Exception $e) {
+            $logger->error('Failed to send confirmation email', [
+                'error' => $e->getMessage(),
+                'commande_id' => $commande->getId(),
+            ]);
+            // Don't block the checkout — the order is already saved
+        }
 
         // Vider le panier
         $session->set('panier', []);
 
-        // Redirect to checkout page to show order summary and process payment
-        // USE THE VERIFIED COMMAND ID FROM THE DATABASE
-        $logger->info('REDIRECTING TO CHECKOUT', [
-            'commande_id' => $commandeId,
-            'route' => 'app_commande_checkout',
-        ]);
-        return $this->redirectToRoute('app_commande_checkout', ['id' => $commandeId]);
+        // Redirect to order details page
+        return $this->redirectToRoute('app_commande_show', ['id' => $commandeId]);
     }
 }

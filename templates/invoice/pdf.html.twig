@@ -47,8 +47,8 @@
     <div class="invoice-summary">
         <p><strong>Total:</strong> {{ commande.totales|number_format(2, ',', ' ') }} DT</p>
         <p><strong>Status:</strong> {{ commande.statut }}</p>
-        {% if stripePaymentId %}
-        <p><strong>Payment ID:</strong> {{ stripePaymentId }}</p>
+        {% if paymentId %}
+        <p><strong>Payment ID:</strong> {{ paymentId }}</p>
         {% endif %}
     </div>
 

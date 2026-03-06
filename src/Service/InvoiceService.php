@@ -16,7 +16,7 @@ class InvoiceService
     /**
      * Generate invoice PDF for an order
      */
-    public function generateInvoicePdf(Commande $commande, ?string $stripePaymentIntentId = null): \Symfony\Component\HttpFoundation\Response
+    public function generateInvoicePdf(Commande $commande, ?string $paymentIntentId = null): \Symfony\Component\HttpFoundation\Response
     {
         $invoiceNumber = $this->generateInvoiceNumber($commande);
         $invoiceDate = new \DateTime();
@@ -26,7 +26,7 @@ class InvoiceService
             'invoiceNumber' => $invoiceNumber,
             'invoiceDate' => $invoiceDate,
             'dueDate' => (clone $invoiceDate)->modify('+30 days'),
-            'stripePaymentId' => $stripePaymentIntentId,
+            'paymentId' => $paymentIntentId,
             'companyInfo' => [
                 'name' => 'Pharmax',
                 'address' => '123 Rue de la Pharmacie, Tunis',
@@ -59,7 +59,7 @@ class InvoiceService
     /**
      * Generate invoice HTML for email
      */
-    public function generateInvoiceHtml(Commande $commande, ?string $stripePaymentIntentId = null): string
+    public function generateInvoiceHtml(Commande $commande, ?string $paymentIntentId = null): string
     {
         $invoiceNumber = $this->generateInvoiceNumber($commande);
         $invoiceDate = new \DateTime();
@@ -69,7 +69,7 @@ class InvoiceService
             'invoiceNumber' => $invoiceNumber,
             'invoiceDate' => $invoiceDate,
             'dueDate' => (clone $invoiceDate)->modify('+30 days'),
-            'stripePaymentId' => $stripePaymentIntentId,
+            'paymentId' => $paymentIntentId,
             'companyInfo' => [
                 'name' => 'Pharmax',
                 'address' => '123 Rue de la Pharmacie, Tunis',

@@ -365,13 +365,22 @@ class CommandeController extends AbstractController
     // ============= ROUTES FRONTEND =============
 
     #[Route('/frontend', name: 'app_frontend_commande_index')]
-    public function indexFrontend(CommandeRepository $commandeRepository): Response
+    public function indexFrontend(Request $request, CommandeRepository $commandeRepository, PaginatorInterface $paginator): Response
     {
-        // Récupère toutes les commandes pour l'affichage public
-        $commandes = $commandeRepository->findAll();
+        $qb = $commandeRepository->createQueryBuilder('c')
+            ->leftJoin('c.utilisateur', 'u')
+            ->addSelect('u')
+            ->orderBy('c.createdAt', 'DESC');
+
+        $pagination = $paginator->paginate(
+            $qb,
+            max(1, (int) $request->query->get('page', 1)),
+            10
+        );
 
         return $this->render('frontend/commande/index.html.twig', [
-            'commandes' => $commandes,
+            'commandes' => $pagination,
+            'pagination' => $pagination,
         ]);
     }
 
